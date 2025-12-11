@@ -1,16 +1,11 @@
 ---
 theme: dashboard
-title: DuckPGQ Node.js Loader
+title: network graph
 ---
-
-# DuckPGQ + Node.js Loader 🦆🚀
-
-ビルド時 (Node.js) にDuckDB + DuckPGQを使ってグラフデータを生成し、それをここで可視化しています。
-ブラウザでは計算せず、JSONを表示するだけです。
 
 ```js
 // データローダーが生成したJSONを読み込む
-const data = FileAttachment("data/graph-analytics.json").json();
+const data = FileAttachment("data/karate-network.json").json();
 ```
 
 ```js

@@ -15,7 +15,7 @@ import json
 
 def main():
     try:
-        # 未署名の拡張機能を許可して接続
+        # unsigned extension for install duckpgq
         con = duckdb.connect(config={'allow_unsigned_extensions': 'true'})
 
         # DuckPGQとhttpfsのインストールとロード
@@ -25,7 +25,6 @@ def main():
         con.sql("LOAD httpfs;")
 
         # Karate Club データのロード (Edges)
-        # GitHubのraw CSVからロード (ヘッダーなしのため column0, column1 を使用)
         con.sql("CREATE TABLE Edges AS SELECT column0 AS source_id, column1 AS target_id FROM read_csv_auto('https://raw.githubusercontent.com/raphaelgodro/Kernighan-Lin/master/karate-network.csv');")
 
         # Nodes テーブルの生成 (EdgesからユニークなIDを抽出)
@@ -45,8 +44,7 @@ def main():
             );
         """)
 
-        # グラフクエリの実行
-        # 単純に全エッジを取得
+        # 全エッジを取得
         query = """
             SELECT
                 source,
@@ -58,20 +56,18 @@ def main():
             )
         """
 
-        # 結果を取得 (List of tuples)
+        # 結果を取得
         rows = con.sql(query).fetchall()
 
-        # Python側で nodes, links を構築
+        # d3用の nodes, links を構築
         nodes_set = set()
         links = []
-
         for source, target in rows:
             if source and target: # NULLチェック
                 nodes_set.add(source)
                 nodes_set.add(target)
                 links.append({"source": source, "target": target, "value": 1})
 
-        # JSON構造を作成
         nodes = [{"id": name, "group": 1} for name in nodes_set]
         output = {"nodes": nodes, "links": links}
 
@@ -79,7 +75,6 @@ def main():
         print(json.dumps(output))
 
     except Exception as e:
-        # エラーを標準エラー出力へ
         sys.stderr.write(f"Error: {str(e)}\n")
         sys.exit(1)
 
