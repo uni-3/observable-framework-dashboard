@@ -21,12 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # data loader
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
       - name: make data loader script executable
         run: chmod +x src/data/*.py
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
