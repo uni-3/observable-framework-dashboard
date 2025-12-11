@@ -14,11 +14,18 @@ const data = FileAttachment("data/graph-analytics.json").json();
 ```
 
 ```js
-import {createNetworkGraph} from "./components/network.js";
+import {createNetworkGraph, createCircularGraph} from "./components/network.js";
 ```
 
-<div class="card">
-  ${createNetworkGraph(data, {width: width, height: 500})}
+<div class="grid grid-cols-2">
+  <div class="card">
+    <h3>Force Layout</h3>
+    ${createNetworkGraph(data, {width: width, height: 500})}
+  </div>
+  <div class="card">
+    <h3>Circular Layout</h3>
+    ${createCircularGraph(data, {width: width, height: 500})}
+  </div>
 </div>
 
 ### 生データ (JSON)

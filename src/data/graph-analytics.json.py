@@ -18,41 +18,44 @@ def main():
         # 未署名の拡張機能を許可して接続
         con = duckdb.connect(config={'allow_unsigned_extensions': 'true'})
 
-        # DuckPGQのインストールとロード
+        # DuckPGQとhttpfsのインストールとロード
         con.sql("INSTALL duckpgq FROM community;")
+        con.sql("INSTALL httpfs;")
         con.sql("LOAD duckpgq;")
+        con.sql("LOAD httpfs;")
 
-        # 公式サンプルデータのロード
-        con.sql("CREATE TABLE Person AS SELECT * FROM 'https://gist.githubusercontent.com/Dtenwolde/2b02aebbed3c9638a06fda8ee0088a36/raw/8c4dc551f7344b12eaff2d1438c9da08649d00ec/person-sf0.003.csv';")
-        con.sql("CREATE TABLE Person_knows_person AS SELECT * FROM 'https://gist.githubusercontent.com/Dtenwolde/81c32c9002d4059c2c3073dbca155275/raw/8b440e810a48dcaa08c07086e493ec0e2ec6b3cb/person_knows_person-sf0.003.csv';")
+        # Karate Club データのロード (Edges)
+        # GitHubのraw CSVからロード (ヘッダーなしのため column0, column1 を使用)
+        con.sql("CREATE TABLE Edges AS SELECT column0 AS source_id, column1 AS target_id FROM read_csv_auto('https://raw.githubusercontent.com/raphaelgodro/Kernighan-Lin/master/karate-network.csv');")
+
+        # Nodes テーブルの生成 (EdgesからユニークなIDを抽出)
+        con.sql("CREATE TABLE Nodes AS SELECT DISTINCT source_id AS id, cast(id as VARCHAR) as name FROM Edges UNION SELECT DISTINCT target_id AS id, cast(id as VARCHAR) as name FROM Edges;")
 
         # プロパティグラフの定義
         con.sql("""
-            CREATE PROPERTY GRAPH snb
+            CREATE PROPERTY GRAPH karate_club
             VERTEX TABLES (
-                Person
+                Nodes
             )
             EDGE TABLES (
-                Person_knows_person
-                SOURCE KEY (Person1Id) REFERENCES Person (id)
-                DESTINATION KEY (Person2Id) REFERENCES Person (id)
-                LABEL knows
+                Edges
+                SOURCE KEY (source_id) REFERENCES Nodes (id)
+                DESTINATION KEY (target_id) REFERENCES Nodes (id)
+                LABEL connects
             );
         """)
 
         # グラフクエリの実行
-        # 複雑なSQL（CTE+JSON）だとDuckDBが落ちるため、単純なクエリで結果を取得し
-        # Python側でJSONを構築する方針に変更
+        # 単純に全エッジを取得
         query = """
             SELECT
                 source,
                 target
             FROM GRAPH_TABLE (
-                snb
-                MATCH (a:Person)-[k:knows]->(b:Person)
-                COLUMNS (a.firstName AS source, b.firstName AS target)
+                karate_club
+                MATCH (a:Nodes)-[e:connects]->(b:Nodes)
+                COLUMNS (a.name AS source, b.name AS target)
             )
-            LIMIT 200;
         """
 
         # 結果を取得 (List of tuples)
