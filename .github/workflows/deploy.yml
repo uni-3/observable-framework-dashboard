@@ -24,15 +24,17 @@ jobs:
       - uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
+      - name: make data loader script executable
+        run: chmod +x src/data/*.py
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: chmod +x src/data/*.py
       - run: npm run build
       - uses: actions/configure-pages@v4
-      - uses: actions/upload-pages-artifact@v3
+      - name: upload pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: dist
       - name: Deploy
