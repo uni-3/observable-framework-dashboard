@@ -2,13 +2,10 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "duckdb==1.2.2",
+#     "duckdb==1.2.1",
 # ]
 # ///
 
-# 実行権限必須
-# chmod +x ./src/data/karate-network.json.py
-# run by ./src/data/karate-network.json.py
 import duckdb
 import sys
 import json
