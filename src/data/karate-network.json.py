@@ -7,8 +7,8 @@
 # ///
 
 # 実行権限必須
-# chmod +x ./src/data/graph-analytics.json.py
-# run by ./src/data/graph-analytics.json.py
+# chmod +x ./src/data/karate-network.json.py
+# run by ./src/data/karate-network.json.py
 import duckdb
 import sys
 import json
