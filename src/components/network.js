@@ -1,20 +1,22 @@
 //import * as d3 from "npm:d3";
 import * as d3 from "d3";
 
+function nodeDegrees(nodes, links) {
+    const nodeMap = new Map(nodes.map(d => [d.id, d]));
+    nodes.forEach(n => n.degree = 0);
+    links.forEach(l => {
+      if (nodeMap.has(l.source)) nodeMap.get(l.source).degree++;
+      if (nodeMap.has(l.target)) nodeMap.get(l.target).degree++;
+    });
+}
+
 export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
-  // 元データを破壊しないようにコピー
+  // コピー
   const links = data.links.map(d => ({...d}));
   const nodes = data.nodes.map(d => ({...d}));
 
-  // 次数 (degree) を計算
-  const nodeById = new Map(nodes.map(d => [d.id, d]));
-  nodes.forEach(n => n.degree = 0);
-  links.forEach(l => {
-    // ForceSimulationがsource/targetをオブジェクトに置換する前はID文字列かもしれないので注意が必要だが
-    // ここでは初期状態として文字列IDを想定
-    if (nodeById.has(l.source)) nodeById.get(l.source).degree++;
-    if (nodeById.has(l.target)) nodeById.get(l.target).degree++;
-  });
+  // 次数 (degree) を付与
+  nodeDegrees(nodes, links);
 
   // カラーパレット
   const color = d3.scaleOrdinal(d3.schemeTableau10);
@@ -39,9 +41,8 @@ export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
     .selectAll("line")
     .data(links)
     .join("line")
-      .attr("stroke-width", d => Math.sqrt(d.value) * 2); // 重みによって太さを変える
+      .attr("stroke-width", d => Math.sqrt(d.value) * 2);
 
-  // ノード（円）の描画
   const node = svg.append("g")
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
@@ -52,11 +53,10 @@ export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
       .attr("fill", d => color(d.group))
       .call(drag(simulation)); // ドラッグ操作を有効化
 
-  // ツールチップ (title属性)
+  // tooltip not working
   node.append("title")
       .text(d => `ID: ${d.id}\nConnections: ${d.degree}`);
 
-  // ノードごとのラベル
   const text = svg.append("g")
     .selectAll("text")
     .data(nodes)
@@ -65,9 +65,8 @@ export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
       .attr("font-size", 10)
       .attr("dx", 12)
       .attr("dy", 4)
-      .attr("fill", "currentColor"); // テーマに合わせて色が変わるように
+      .attr("fill", "currentColor");
 
-  // ラベルにもツールチップを追加
   text.append("title")
       .text(d => `ID: ${d.id}\nConnections: ${d.degree}`);
 
@@ -118,17 +117,10 @@ export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
 
 // 円形配置 (Circular Layout)
 export function createCircularGraph(data, {width = 600, height = 600} = {}) {
-  // 次数を計算してノードに追加
-  // ForceGraphと同じデータセットを参照してしまうとsimulationでx,yが書き換わっているのでコピー
+  // コピー
   const nodesRaw = data.nodes.map(d => ({...d}));
-  const nodeMap = new Map(nodesRaw.map(d => [d.id, d]));
 
-  nodesRaw.forEach(n => n.degree = 0);
-  data.links.forEach(l => {
-     // linksのsource/targetは文字列のまま
-     if (nodeMap.has(l.source)) nodeMap.get(l.source).degree++;
-     if (nodeMap.has(l.target)) nodeMap.get(l.target).degree++;
-  });
+  nodeDegrees(nodesRaw, data.links);
 
   const radius = Math.min(width, height) / 2 * 0.8;
   const nodes = nodesRaw.map((d, i) => {
@@ -196,13 +188,13 @@ export function createCircularGraph(data, {width = 600, height = 600} = {}) {
       .attr("dx", d => d.x < width / 2 ? -10 : 10)
       .attr("text-anchor", d => d.x < width / 2 ? "end" : "start")
       .text(d => d.id)
-      .clone(true).lower() // 白い縁取りを追加して読みやすく
+      .clone(true).lower()
         .attr("fill", "none")
         .attr("stroke", "white")
         .attr("stroke-width", 3);
 
     // ラベルにもツールチップを追加
-    svg.select("g:last-child").selectAll("text") // 最後に追加したg(テキスト)を選択
+    svg.select("g:last-child").selectAll("text")
         .append("title")
         .text(d => `ID: ${d.id}\nConnections: ${d.degree}`);
 
