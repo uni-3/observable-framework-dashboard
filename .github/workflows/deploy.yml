@@ -40,3 +40,8 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        inputs:
+          # set true if not main branch
+          preview: ${{ github.ref != 'refs/heads/main' }}
+      - name: echo page url
+        run: echo ${{ steps.deployment.outputs.page_url }}

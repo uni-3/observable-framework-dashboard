@@ -1,7 +1,10 @@
 ---
 theme: dashboard
 title: network graph
+toc: true
 ---
+
+## カラテクラブネットワーク図️
 
 ```js
 // データローダーが生成したJSONを読み込む
