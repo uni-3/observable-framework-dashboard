@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "nodenext",
+        "target": "es2022",
+        "checkJs": true,
+        "lib": [
+            "es2022",
+            "dom"
+        ],
+        "strict": false
+    },
+    "exclude": [
+        "node_modules",
+        "dist",
+        ".observablehq"
+    ]
+}
