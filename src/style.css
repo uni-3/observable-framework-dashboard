@@ -1,0 +1,13 @@
+/* グローバルなカスタムスタイル */
+:root {
+  --theme-foreground-focus: #3b82f6; /* Tailwind blue-500 */
+}
+
+/* Tailwindと競合しないようにカスタムクラスを定義したり、
+   Markdown特有の要素を上書きしたりできます */
+
+.card {
+  /* Observable Framework標準のカードスタイルを少しアレンジ */
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
