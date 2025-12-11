@@ -40,7 +40,7 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-        inputs:
+        with:
           # set true if not main branch
           preview: ${{ github.ref != 'refs/heads/main' }}
       - name: echo page url
