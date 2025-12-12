@@ -1,10 +1,22 @@
 //import * as d3 from "npm:d3";
 import * as d3 from "d3";
 
+function nodeDegrees(nodes, links) {
+    const nodeMap = new Map(nodes.map(d => [d.id, d]));
+    nodes.forEach(n => n.degree = 0);
+    links.forEach(l => {
+      if (nodeMap.has(l.source)) nodeMap.get(l.source).degree++;
+      if (nodeMap.has(l.target)) nodeMap.get(l.target).degree++;
+    });
+}
+
 export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
-  // 元データを破壊しないようにコピー
+  // コピー
   const links = data.links.map(d => ({...d}));
   const nodes = data.nodes.map(d => ({...d}));
+
+  // 次数 (degree) を付与
+  nodeDegrees(nodes, links);
 
   // カラーパレット
   const color = d3.scaleOrdinal(d3.schemeTableau10);
@@ -29,20 +41,22 @@ export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
     .selectAll("line")
     .data(links)
     .join("line")
-      .attr("stroke-width", d => Math.sqrt(d.value) * 2); // 重みによって太さを変える
+      .attr("stroke-width", d => Math.sqrt(d.value) * 2);
 
-  // ノード（円）の描画
   const node = svg.append("g")
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
     .selectAll("circle")
     .data(nodes)
     .join("circle")
-      .attr("r", 8) // 半径
+      .attr("r", d => d.degree) // 半径を次数に比例させる(ベース小さく)
       .attr("fill", d => color(d.group))
       .call(drag(simulation)); // ドラッグ操作を有効化
 
-  // ノードごとのラベル
+  // tooltip not working
+  node.append("title")
+      .text(d => `ID: ${d.id}\nConnections: ${d.degree}`);
+
   const text = svg.append("g")
     .selectAll("text")
     .data(nodes)
@@ -51,7 +65,10 @@ export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
       .attr("font-size", 10)
       .attr("dx", 12)
       .attr("dy", 4)
-      .attr("fill", "currentColor"); // テーマに合わせて色が変わるように
+      .attr("fill", "currentColor");
+
+  text.append("title")
+      .text(d => `ID: ${d.id}\nConnections: ${d.degree}`);
 
   // タイマーごとに位置を更新
   simulation.on("tick", () => {
@@ -94,6 +111,92 @@ export function createNetworkGraph(data, {width = 600, height = 600} = {}) {
         .on("drag", dragged)
         .on("end", dragended);
   }
+
+  return svg.node();
+}
+
+// 円形配置 (Circular Layout)
+export function createCircularGraph(data, {width = 600, height = 600} = {}) {
+  // コピー
+  const nodesRaw = data.nodes.map(d => ({...d}));
+
+  nodeDegrees(nodesRaw, data.links);
+
+  const radius = Math.min(width, height) / 2 * 0.8;
+  const nodes = nodesRaw.map((d, i) => {
+    const angle = (i / nodesRaw.length) * 2 * Math.PI;
+    return {
+      ...d,
+      x: (width / 2) + radius * Math.cos(angle - Math.PI / 2),
+      y: (height / 2) + radius * Math.sin(angle - Math.PI / 2)
+    };
+  });
+
+  const nodeById = new Map(nodes.map(d => [d.id, d]));
+  const links = data.links.map(d => ({
+    ...d,
+    source: nodeById.get(d.source),
+    target: nodeById.get(d.target)
+  }));
+
+  const color = d3.scaleOrdinal(d3.schemeTableau10);
+
+  const svg = d3.create("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [0, 0, width, height])
+      .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif;");
+
+  // リンク
+  svg.append("g")
+      .attr("fill", "none")
+      .attr("stroke-opacity", 0.4)
+    .selectAll("path")
+    .data(links)
+    .join("path")
+      .style("mix-blend-mode", "multiply")
+      .attr("d", d => {
+          return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+      })
+      .attr("stroke", d => color(d.source.group))
+      .attr("stroke-width", 1);
+
+  // ノード
+  const node = svg.append("g")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1.5)
+    .selectAll("circle")
+    .data(nodes)
+    .join("circle")
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y)
+      .attr("r", d => d.degree) // 半径を次数に比例させる(強調)
+      .attr("fill", d => color(d.group))
+
+  // ツールチップ
+  node.append("title")
+      .text(d => `ID: ${d.id}\nConnections: ${d.degree}`);
+
+  // ラベル
+  svg.append("g")
+    .selectAll("text")
+    .data(nodes)
+    .join("text")
+      .attr("x", d => d.x)
+      .attr("y", d => d.y)
+      .attr("dy", "0.31em")
+      .attr("dx", d => d.x < width / 2 ? -10 : 10)
+      .attr("text-anchor", d => d.x < width / 2 ? "end" : "start")
+      .text(d => d.id)
+      .clone(true).lower()
+        .attr("fill", "none")
+        .attr("stroke", "white")
+        .attr("stroke-width", 3);
+
+    // ラベルにもツールチップを追加
+    svg.select("g:last-child").selectAll("text")
+        .append("title")
+        .text(d => `ID: ${d.id}\nConnections: ${d.degree}`);
 
   return svg.node();
 }
