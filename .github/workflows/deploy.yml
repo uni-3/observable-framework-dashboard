@@ -22,8 +22,6 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
-      # - name: make data loader script executable
-      #   run: chmod +x src/data/*.py
       - uses: actions/setup-node@v6
         with:
           node-version: 22
