@@ -36,9 +36,11 @@ const linkWidthScale = d3.scaleLinear()
 
 const simulation = d3.forceSimulation(nodes)
     .velocityDecay(0.3)
+    .alphaDecay(0.02)
     .force("link", d3.forceLink(links).id(d => d.id).distance(250).strength(0.5))
     .force("charge", d3.forceManyBody().strength(-3000))
-    .force("center", d3.forceCenter(width / 2, height / 2))
+    .force("x", d3.forceX(width / 2).strength(0.05))
+    .force("y", d3.forceY(height / 2).strength(0.05))
     .force("collision", d3.forceCollide().radius(d => getRadius(d) + 10))
     .stop();
 
@@ -68,7 +70,6 @@ const tooltip = container.append("div")
 const link = svg.append("g")
     .attr("stroke", "#999")
     .attr("stroke-opacity", 0.5)
-    .attr("pointer-events", "none")
   .selectAll("line")
   .data(links)
   .join("line")
@@ -76,7 +77,35 @@ const link = svg.append("g")
     .attr("x1", d => d.source.x)
     .attr("y1", d => d.source.y)
     .attr("x2", d => d.target.x)
-    .attr("y2", d => d.target.y);
+    .attr("y2", d => d.target.y)
+    .attr("cursor", "pointer")
+    .attr("pointer-events", "stroke");
+
+// エッジのマウスイベント
+link
+    .on("mouseover", (event, d) => {
+      tooltip.style("visibility", "visible");
+      const content = `
+        <strong>組み合わせ: ${d.source.id} - ${d.target.id}</strong><br>
+        共起数: ${d.value}
+      `;
+      tooltip.html(content);
+      d3.select(event.currentTarget)
+        .attr("stroke", "#666")
+        .attr("stroke-opacity", 1);
+    })
+    .on("mousemove", (event) => {
+      const [x, y] = d3.pointer(event, container.node());
+      tooltip
+        .style("top", (y + 10) + "px")
+        .style("left", (x + 10) + "px");
+    })
+    .on("mouseout", (event) => {
+      tooltip.style("visibility", "hidden");
+      d3.select(event.currentTarget)
+        .attr("stroke", "#999")
+        .attr("stroke-opacity", 0.5);
+    });
 
 // ノード
 const node = svg.append("g")
