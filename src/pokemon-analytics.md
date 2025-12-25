@@ -184,7 +184,7 @@ const getRadius = d => d.group === 1 ? radiusScale(d.count) : 3;
 const simulation = d3.forceSimulation(nodes)
     // 速度の減衰 (0〜1)
     .velocityDecay(0.6)
-    // エネルギーの減衰速度。シミュレーションが「安定（停止）」に向かう速さ
+    // エネルギーの減衰速度
     .alphaDecay(0.02)
     // リンク: ポケモンノードをタイプノードにしっかり追従
     .force("link", d3.forceLink(links).id(d => d.id).distance(20).strength(1))
@@ -193,9 +193,9 @@ const simulation = d3.forceSimulation(nodes)
     // 中央へ引き寄せる力
     .force("x", d3.forceX(width / 2).strength(0.1))
     .force("y", d3.forceY(height / 2).strength(0.1))
-    // 衝突したら動く
+    // 衝突判定
     .force("collision", d3.forceCollide().radius(d => getRadius(d) + (d.group === 1 ? 30 : 0)))
-    .stop(); // 自動実行を一旦止める
+    .stop();
 
 // 配置が定まってから描画したいので事前に計算する 300回ループ
 for (let i = 0; i < 300; ++i) simulation.tick();
