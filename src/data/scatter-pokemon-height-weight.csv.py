@@ -27,7 +27,8 @@ def main():
             name,
             height,
             weight,
-            string_agg(type_name, ',') AS type_name
+            string_agg(type_name, ',') AS type_names,
+            min(type_name) AS type_name
         FROM pokemon_marts.scatter_pokemon_height_weight
         GROUP BY ALL
     """)

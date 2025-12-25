@@ -13,7 +13,7 @@ const pokemon_height_weight = FileAttachment("../data/scatter-pokemon-height-wei
 
 ```
 
-plot
+## 世代ごとのポケモンタイプ数
 
 ```js
 const selectedGenerations = view(Inputs.checkbox(Object.keys(generationColors), {
@@ -52,7 +52,7 @@ Plot.waffleY(
 })
 ```
 
-- クロス集計
+## 世代・タイプのクロス集計
 
 ```js
 Plot.plot({
@@ -98,20 +98,34 @@ Plot.plot({
 })
 ```
 
-scatter plot
+## 高さ・重さの散布図
+
+
+```js
+const selectedTypes = view(Inputs.checkbox(Object.keys(typeColors), {
+  label: "タイプで絞る",
+  value: Object.keys(typeColors)
+}));
+```
+
+```js
+const filtered_pokemon_height_weight = pokemon_height_weight.filter((d) =>
+  selectedTypes.includes(d.type_name)
+);
+```
 
 ```js
 //Inputs.table(pokemon_height_weight)
 ```
 
 ```js
-Plot.dot(pokemon_height_weight, {
+Plot.dot(filtered_pokemon_height_weight, {
     x: "height",
     y: "weight",
     fill: "type_name",
     tip: true,
     // tipのカスタム
-    title: (d) => `${d.name}\nタイプ: ${d.type_name}\n高さ: ${d.height}m \n重さ: ${d.weight}kg`,
+    title: (d) => `${d.name}\nタイプ: ${d.type_names}\n高さ: ${d.height}m \n重さ: ${d.weight}kg`,
 }).plot({
     grid: true,
     color: {
