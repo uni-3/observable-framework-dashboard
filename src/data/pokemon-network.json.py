@@ -17,7 +17,9 @@ import networkx as nx
 
 def main():
     try:
-        load_dotenv(".env.local", override=True)
+        load_dotenv(".env.local")
+        load_dotenv(".env")
+
 
         database = os.getenv("DUCKDB_DATABASE")
         if not database:
@@ -33,7 +35,7 @@ def main():
                 GROUP BY name
             )
             SELECT
-                t.type_name,
+                t.type_name as type_name,
                 COUNT(*) as total_count,
                 COUNTIF(st.type_count = 1) as single_type_count,
                 ROUND(COUNTIF(st.type_count = 1) * 1.0 / COUNT(*), 3) as single_type_rate

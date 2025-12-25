@@ -1,5 +1,5 @@
 <div class="flex flex-col items-center text-center mt-16 mb-8 px-4">
-  <h1 class="text-6xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-yellow-500 py-4">
+  <h1 class="text-6xl md:text-4xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-yellow-500 py-4">
     Observable Framework Dashboard Explorer
   </h1>
 </div>
