@@ -20,7 +20,7 @@ const width = 800;
 const height = 800;
 
 const nodes = pokemon_network.type_nodes.map(d => ({...d}));
-const links = pokemon_network.links.map(d => ({...d}));
+const links = pokemon_network.co_links.map(d => ({...d}));
 
 // type nodeの大きさ制御
 const radiusScale = d3.scaleSqrt()
@@ -37,7 +37,7 @@ const linkWidthScale = d3.scaleLinear()
 const simulation = d3.forceSimulation(nodes)
     .velocityDecay(0.3)
     .alphaDecay(0.02)
-    .force("link", d3.forceLink(links).id(d => d.id).distance(250).strength(0.5))
+    .force("link", d3.forceLink(links).id(d => d.type_name).distance(250).strength(0.5))
     .force("charge", d3.forceManyBody().strength(-3000))
     .force("x", d3.forceX(width / 2).strength(0.05))
     .force("y", d3.forceY(height / 2).strength(0.05))
@@ -86,7 +86,7 @@ link
     .on("mouseover", (event, d) => {
       tooltip.style("visibility", "visible");
       const content = `
-        <strong>組み合わせ: ${d.source.id} - ${d.target.id}</strong><br>
+        <strong>組み合わせ: ${d.source.type_name} - ${d.target.type_name}</strong><br>
         共起数: ${d.value}
       `;
       tooltip.html(content);
@@ -122,7 +122,7 @@ const node = svg.append("g")
 // タイプノード
 node.append("circle")
     .attr("r", d => getRadius(d))
-    .attr("fill", d => typeColors[d.id] || "#ccc")
+    .attr("fill", d => typeColors[d.type_name] || "#ccc")
     .attr("stroke", "#fff")
     .attr("stroke-width", 2);
 
@@ -131,10 +131,10 @@ node
     .on("mouseover", (event, d) => {
       tooltip.style("visibility", "visible");
       const content = `
-        <strong>タイプ: ${d.id}</strong><br>
+        <strong>タイプ: ${d.type_name}</strong><br>
         出現数: ${d.total_count}<br>
-        単独数: ${d.single_count}<br>
-        単独率: ${(d.isolation_rate * 100).toFixed(1)}%<br>
+        単独数: ${d.single_type_count}<br>
+        単独率: ${(d.single_type_rate * 100).toFixed(1)}%<br>
         次数中心性: ${d.degree_centrality.toFixed(3)}
       `;
       tooltip.html(content);
@@ -157,7 +157,7 @@ const label = svg.append("g")
   .selectAll("text")
   .data(nodes.filter(d => d.group === 1))
   .join("text")
-    .text(d => d.id)
+    .text(d => d.type_name)
     .attr("x", d => d.x)
     .attr("y", d => d.y)
     .attr("font-size", "14px")
@@ -227,7 +227,7 @@ const getBipartiteRadius = d => d.group === 1 ? b_radiusScale(d.total_count) : 3
 const b_simulation = d3.forceSimulation(bipartite_nodes)
     .velocityDecay(0.6)
     .alphaDecay(0.02)
-    .force("link", d3.forceLink(bipartite_links).id(d => d.id).distance(30).strength(1))
+    .force("link", d3.forceLink(bipartite_links).id(d => d.group === 1 ? d.type_name : d.name).distance(30).strength(1))
     .force("charge", d3.forceManyBody().strength(d => d.group === 1 ? -1000 : -20))
     .force("x", d3.forceX(bipartite_width / 2).strength(0.1))
     .force("y", d3.forceY(bipartite_height / 2).strength(0.1))
@@ -291,7 +291,7 @@ const b_node = b_svg.append("g")
 b_node.filter(d => d.group === 1)
   .append("circle")
     .attr("r", d => getBipartiteRadius(d))
-    .attr("fill", d => typeColors[d.id] || "#ccc")
+    .attr("fill", d => typeColors[d.type_name] || "#ccc")
     .attr("stroke", "#fff")
     .attr("stroke-width", 2);
 
@@ -309,8 +309,8 @@ b_node
     .on("mouseover", (event, d) => {
       b_tooltip.style("visibility", "visible");
       const content = d.group === 1
-        ? `<strong>タイプ: ${d.id}</strong><br>所属数: ${d.total_count}`
-        : `<strong>名前: ${d.id}</strong><br>タイプ: ${(d.types || []).join(", ")}`;
+        ? `<strong>タイプ: ${d.type_name}</strong><br>所属数: ${d.total_count}`
+        : `<strong>名前: ${d.name}</strong><br>タイプ: ${(d.types || []).join(", ")}`;
       b_tooltip.html(content);
       d3.select(event.currentTarget).selectAll("circle, rect").attr("stroke", "#ccc").attr("fill-opacity", 1);
     })
@@ -331,7 +331,7 @@ const b_label = b_svg.append("g")
   .selectAll("text")
   .data(bipartite_nodes.filter(d => d.group === 1))
   .join("text")
-    .text(d => d.id)
+    .text(d => d.type_name)
     .attr("x", d => d.x)
     .attr("y", d => d.y)
     .attr("font-size", "12px")
