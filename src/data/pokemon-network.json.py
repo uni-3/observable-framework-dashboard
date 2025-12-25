@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "duckdb==1.2.1",
+#     "duckdb==1.4.3",
 #     "python-dotenv",
 #     "networkx",
 # ]

@@ -11,7 +11,7 @@ const pages = FileAttachment("./data/pages.json").json();
 <ul>
 ${pages.map(p => html`
   <li>
-    <a href="${p.path}"><strong>${p.title}</strong></a>
+    <a href=".${p.path}"><strong>${p.title}</strong></a>
     <span class="text-slate-400 text-sm ml-2">(${p.path})</span>
   </li>
 `)}
