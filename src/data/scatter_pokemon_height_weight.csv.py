@@ -21,7 +21,15 @@ def main():
     con = duckdb.connect(database, read_only=True)
 
     # クエリ実行
-    res = con.sql("SELECT * FROM pokemon_marts.scatter_pokemon_height_weight")
+    res = con.sql("""
+        SELECT
+            name,
+            height,
+            weight,
+            string_agg(type_name, ',') AS type_name
+        FROM pokemon_marts.scatter_pokemon_height_weight
+        GROUP BY ALL
+    """)
 
     # CSV形式で変数に取得
     res.write_csv("/dev/stdout", header=True)
