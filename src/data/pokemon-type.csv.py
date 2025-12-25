@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 import duckdb
 
 def main():
-    load_dotenv(".env.local", override=True)
+    load_dotenv(".env.local")
+    load_dotenv(".env")
 
     database = os.getenv("DUCKDB_DATABASE")
     if not database:

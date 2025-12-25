@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 import duckdb
 
 def main():
-    load_dotenv(".env.local", override=True)
+    load_dotenv(".env.local")
+    load_dotenv(".env")
 
     database = os.getenv("DUCKDB_DATABASE")
     if not database:
@@ -33,9 +34,6 @@ def main():
 
     # CSV形式で変数に取得
     res.write_csv("/dev/stdout", header=True)
-
-    # 出力
-    #print(csv_string, end="")
 
 
 if __name__ == "__main__":
