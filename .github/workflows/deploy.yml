@@ -28,6 +28,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          DUCKDB_DATABASE: ${{ secrets.DUCKDB_DATABASE }}
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
       - uses: actions/configure-pages@v4
       - name: upload pages artifact
         uses: actions/upload-pages-artifact@v3
