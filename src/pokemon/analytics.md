@@ -1,6 +1,6 @@
 ---
 theme: dashboard
-title: pokemon analytics
+title: ポケモン分析
 ---
 
 
@@ -9,7 +9,7 @@ import {generationColors, typeColors} from "../components/color.js";
 
 const count_pokemon_type = FileAttachment("../data/pokemon-type.csv").csv({typed: true});
 
-const pokemon_height_weight = FileAttachment("../data/scatter_pokemon_height_weight.csv").csv({typed: true});
+const pokemon_height_weight = FileAttachment("../data/scatter-pokemon-height-weight.csv").csv({typed: true});
 
 ```
 

@@ -1,6 +1,6 @@
 ---
 theme: dashboard
-title: network graph
+title: Example Network Graph
 toc: true
 ---
 

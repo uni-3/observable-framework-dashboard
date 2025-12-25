@@ -1,19 +1,39 @@
 ---
 theme: dashboard
-title: pokemon network
+title: ポケモンタイプネットワーク
 ---
 
 ```js
 import {generationColors, typeColors} from "../components/color.js";
 
-const count_pokemon_type = FileAttachment("../data/pokemon-type.csv").csv({typed: true});
-
-const pokemon_height_weight = FileAttachment("../data/scatter_pokemon_height_weight.csv").csv({typed: true});
-
 const pokemon_network = FileAttachment("../data/pokemon-network.json").json();
 ```
 
-## タイプ共起ネットワーク
+```js
+const totalPokemon = pokemon_network.pokemon_nodes.length;
+const singleTypeCount = pokemon_network.pokemon_nodes.filter(d => d.types.length === 1).length;
+const multiTypeCount = totalPokemon - singleTypeCount;
+```
+
+<div class="grid grid-cols-3">
+  <div class="card">
+    <h2>全ポケモン数</h2>
+    <span class="big">${totalPokemon}</span>
+  </div>
+  <div class="card">
+    <h2>単タイプ</h2>
+    <span class="big">${singleTypeCount}</span>
+    <span class="muted">(${((singleTypeCount / totalPokemon) * 100).toFixed(1)}%)</span>
+  </div>
+  <div class="card">
+    <h2>複タイプ</h2>
+    <span class="big">${multiTypeCount}</span>
+    <span class="muted">(${((multiTypeCount / totalPokemon) * 100).toFixed(1)}%)</span>
+  </div>
+</div>
+
+
+## ポケモンタイプ共起ネットワーク
 
 ```js
 const width = 800;
@@ -86,8 +106,8 @@ link
     .on("mouseover", (event, d) => {
       tooltip.style("visibility", "visible");
       const content = `
-        <strong>組み合わせ: ${d.source.type_name} - ${d.target.type_name}</strong><br>
-        共起数: ${d.value}
+        <strong>タイプ: ${d.source.type_name} ・ ${d.target.type_name}</strong><br>
+        数: ${d.value}
       `;
       tooltip.html(content);
       d3.select(event.currentTarget)
@@ -132,9 +152,9 @@ node
       tooltip.style("visibility", "visible");
       const content = `
         <strong>タイプ: ${d.type_name}</strong><br>
-        出現数: ${d.total_count}<br>
-        単独数: ${d.single_type_count}<br>
-        単独率: ${(d.single_type_rate * 100).toFixed(1)}%<br>
+        合計: ${d.total_count}<br>
+        単タイプ数: ${d.single_type_count}<br>
+        単タイプ率: ${(d.single_type_rate * 100).toFixed(1)}%<br>
         次数中心性: ${d.degree_centrality.toFixed(3)}
       `;
       tooltip.html(content);
@@ -204,18 +224,23 @@ invalidation.then(() => simulation.stop());
 display(container.node());
 ```
 
-## ポケモン・タイプ共起ネットワーク (二部グラフ)
+
+## ポケモンタイプ共起ネットワーク。ポケモンノードも描画した版
 
 ```js
 const bipartite_width = 800;
 const bipartite_height = 800;
 
 // データを結合 (タイプノード + ポケモンノード)
+// ゴーストがtype pokemonで重複するので、uidにprefixをつけている
 const bipartite_nodes = [
-  ...pokemon_network.type_nodes.map(d => ({...d, group: 1})),
-  ...pokemon_network.pokemon_nodes.map(d => ({...d, group: 2}))
+  ...pokemon_network.type_nodes.map(d => ({...d, group: 1, uid: `type:${d.type_name}`})),
+  ...pokemon_network.pokemon_nodes.map(d => ({...d, group: 2, uid: `pokemon:${d.name}`}))
 ];
-const bipartite_links = pokemon_network.bipartite_links.map(d => ({...d}));
+const bipartite_links = pokemon_network.bipartite_links.map(d => ({
+  source: `pokemon:${d.source}`,
+  target: `type:${d.target}`
+}));
 
 // type nodeの位置
 const b_radiusScale = d3.scaleSqrt()
@@ -227,7 +252,7 @@ const getBipartiteRadius = d => d.group === 1 ? b_radiusScale(d.total_count) : 3
 const b_simulation = d3.forceSimulation(bipartite_nodes)
     .velocityDecay(0.6)
     .alphaDecay(0.02)
-    .force("link", d3.forceLink(bipartite_links).id(d => d.group === 1 ? d.type_name : d.name).distance(30).strength(1))
+    .force("link", d3.forceLink(bipartite_links).id(d => d.uid).distance(30).strength(1))
     .force("charge", d3.forceManyBody().strength(d => d.group === 1 ? -1000 : -20))
     .force("x", d3.forceX(bipartite_width / 2).strength(0.1))
     .force("y", d3.forceY(bipartite_height / 2).strength(0.1))
@@ -309,7 +334,7 @@ b_node
     .on("mouseover", (event, d) => {
       b_tooltip.style("visibility", "visible");
       const content = d.group === 1
-        ? `<strong>タイプ: ${d.type_name}</strong><br>所属数: ${d.total_count}`
+        ? `<strong>タイプ: ${d.type_name}</strong><br>合計: ${d.total_count}`
         : `<strong>名前: ${d.name}</strong><br>タイプ: ${(d.types || []).join(", ")}`;
       b_tooltip.html(content);
       d3.select(event.currentTarget).selectAll("circle, rect").attr("stroke", "#ccc").attr("fill-opacity", 1);
@@ -359,4 +384,41 @@ b_simulation.on("tick", () => {
 });
 
 display(b_container.node());
+```
+
+
+
+## 数値データ
+
+グラフの描画に用いたタイプ別の集計指標です。
+
+```js
+Inputs.table(pokemon_network.type_nodes, {
+  select: false,
+  columns: [
+    "type_name",
+    "total_count",
+    "single_type_count",
+    "single_type_rate",
+    "degree_centrality",
+    // "eigenvector_centrality"
+  ],
+})
+```
+
+
+#### ネットワーク指標の定義
+
+- **次数中心性 (Degree Centrality)**: ノードが持つエッジ（直接つながっている他のタイプの数） ${tex `deg(v)`} を、自分以外の全ノード数 ${tex `n-1`} で割ったもの。どれだけ多くの異なるタイプとの組み合わせがあるかを示します。範囲は0〜1で表され、例えば**1.0 の場合は自分以外の全タイプ（17種類）との組み合わせが存在すること**を意味します。
+
+```tex
+C_{degree}(v) = \frac{deg(v)}{n-1}
+```
+
+#### 複タイプ共起数
+
+タイプの組み合わせを持つポケモンが何匹いるかを示します。
+
+```js
+Inputs.table(pokemon_network.co_links, {select: false, sort: "value", reverse: true})
 ```
