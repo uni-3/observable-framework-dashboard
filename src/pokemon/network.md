@@ -6,7 +6,7 @@ title: ポケモンタイプネットワーク
 ```js
 import {generationColors, typeColors} from "../components/color.js";
 
-const pokemon_network = FileAttachment("../data/pokemon-network.json").json();
+const pokemon_network = FileAttachment("../data/pokemon/network.json").json();
 ```
 
 ```js
