@@ -34,8 +34,8 @@ def main():
 
         query = """
             SELECT
-                habitat_name,
-                habitat_name_ja,
+                COALESCE(habitat_name, 'unknown') as habitat_name,
+                COALESCE(habitat_name_ja, '不明') as habitat_name_ja,
                 shape_name,
                 shape_name_ja,
                 egg_groups,
@@ -48,8 +48,7 @@ def main():
             FROM
                 pokemon_intermediate.pokemon_wide
             WHERE
-                habitat_name IS NOT NULL
-                AND shape_name IS NOT NULL
+                shape_name IS NOT NULL
             GROUP BY
                 habitat_name,
                 habitat_name_ja,
