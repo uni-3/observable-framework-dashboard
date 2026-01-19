@@ -7,9 +7,9 @@ title: ポケモン分析
 ```js
 import {generationColors, typeColors} from "../components/color.js";
 
-const count_pokemon_type = FileAttachment("../data/pokemon-type.csv").csv({typed: true});
+const count_pokemon_type = FileAttachment("../data/pokemon/type.csv").csv({typed: true});
 
-const pokemon_height_weight = FileAttachment("../data/scatter-pokemon-height-weight.csv").csv({typed: true});
+const pokemon_height_weight = FileAttachment("../data/pokemon/height-weight.csv").csv({typed: true});
 
 ```
 
