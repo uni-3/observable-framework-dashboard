@@ -43,9 +43,14 @@ const unknownHabitatCount = rawData.filter(d => d.habitat_name_ja === '不明').
 
 ### データセット
 
+ポケモンの個体とメタデータ（タイプ、生息地、かたち、タマゴグループ）を用いて関係性をみてみた
+
+ポケモンの別フォームなどは除いている
 - 全数: ${rawData.length} 体
 - 生息地不明 ${unknownHabitatCount} 体
-生息地不明を除外したデータ ${knownHabitatCount} 体を対応分析で使用した
+- 生息地不明を除外したデータ ${knownHabitatCount} 体。こちらを対応分析で使用した
+
+形など、はpokemon homeのデータより
 
 ## 生息地とかたちの分布
 
