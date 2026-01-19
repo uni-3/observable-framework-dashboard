@@ -1,6 +1,6 @@
 ---
 theme: dashboard
-title: ポケモンのタイプやかたち、環境適応の分析
+title: ポケモンのタイプやかたち、生息環境の分析
 ---
 
 ```js
@@ -32,29 +32,18 @@ const pokemonTypes = [...new Set(flatTypeData.map(d => d.type_ja))].filter(d => 
 ```
 
 
-# 環境適応の分析
+# 生息環境の関係分析
 
-ポケモンの生息地（Habitat）に対するかたち（Shape）の分布や、タイプ、タマゴグループとの関係を可視化します。
+ポケモンの生息地（Habitat）に対するかたち（Shape）の分布や、タイプ、タマゴグループとの関係を可視化します
 
 ```js
 const knownHabitatCount = rawData.filter(d => d.habitat_name_ja !== '不明').length;
 const unknownHabitatCount = rawData.filter(d => d.habitat_name_ja === '不明').length;
 ```
 
-### データセット
-
-ポケモンの個体とメタデータ（タイプ、生息地、かたち、タマゴグループ）を用いて関係性をみてみた
-
-ポケモンの別フォームなどは除いている
-- 全数: ${rawData.length} 体
-- 生息地不明 ${unknownHabitatCount} 体
-- 生息地不明を除外したデータ ${knownHabitatCount} 体。こちらを対応分析で使用した
-
-形など、はpokemon homeのデータより
-
 ## 生息地とかたちの分布
 
-生息地ごとに、どのかたちのポケモンが多いか概観します。
+生息地ごとに、どのかたちのポケモンが多いか概観します
 
 ```js
 Plot.plot({
