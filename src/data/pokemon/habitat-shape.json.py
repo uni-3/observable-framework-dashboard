@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "duckdb==1.1.3",
+#     "duckdb==1.4.3",
 #     "python-dotenv",
 # ]
 # ///
@@ -22,20 +22,13 @@ def main():
         load_dotenv(os.path.join(project_root, ".env"))
 
         database = os.getenv("DUCKDB_DATABASE")
-
-        # If database is just a filename, assume it's in project root if not found
-        if database and not os.path.isabs(database):
-             possible_path = os.path.join(project_root, database)
-             if os.path.exists(possible_path):
-                 database = possible_path
-
         if not database:
              # Fallback
              possible_db = os.path.join(project_root, "dlt_data.duckdb")
              if os.path.exists(possible_db):
                  database = possible_db
              else:
-                 raise ValueError(f"DUCKDB_DATABASE environment variable is not set and {possible_db} not found.")
+                 raise ValueError("DUCKDB_DATABASE environment variable is not set and fallback not found.")
 
         con = duckdb.connect(database, read_only=True)
 
