@@ -11,6 +11,7 @@
 import duckdb
 import os
 from dotenv import load_dotenv
+from networkx.algorithms.community import greedy_modularity_communities
 import sys
 import json
 import networkx as nx
@@ -91,6 +92,14 @@ def main():
         except:
             eigen_cent = {n: 0 for n in G.nodes()}
 
+        # Community detection using NetworkX's greedy modularity algorithm
+        communities = list(greedy_modularity_communities(G, weight='weight'))
+        # Build a map from node to community index
+        community_map = {}
+        for idx, comm in enumerate(communities):
+            for node in comm:
+                community_map[node] = idx
+
         # ノードリストの構築 マージ
         nodes = []
         for type_name, stats in type_data.items():
@@ -98,7 +107,8 @@ def main():
                 **stats,
                 "degree_centrality": round(degree_cent.get(type_name, 0), 3),
                 "eigenvector_centrality": round(eigen_cent.get(type_name, 0), 3),
-                "group": 1
+                "group": 1,
+                "community": community_map.get(type_name, -1) # Add community ID
             })
 
         # ポケモンノードと、ポケモン->タイプのリンク(bipartite_links)を取得

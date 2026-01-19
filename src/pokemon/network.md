@@ -225,7 +225,141 @@ display(container.node());
 ```
 
 
+## タイプネットワークのコミュニティ分析
+
+Greedy Modularityにより検出された、タイプ間の結びつき（共起関係）に基づくクラスター。同じ色の領域は、相互に組み合わされやすいタイプのグループを示しています
+
+```js
+const comm_width = 800;
+const comm_height = 600;
+
+const comm_nodes = pokemon_network.type_nodes.map(d => ({...d}));
+const comm_links = pokemon_network.co_links.map(d => ({...d}));
+
+// コミュニティの色 scale
+const communityColor = d3.scaleOrdinal(d3.schemeObservable10);
+
+// ノードの大きさ制御 (他のグラフと同期)
+const comm_radiusScale = d3.scaleSqrt()
+    .domain([0, d3.max(comm_nodes, d => d.total_count)])
+    .range([8, 25]);
+
+const getCommRadius = d => comm_radiusScale(d.total_count);
+
+const comm_simulation = d3.forceSimulation(comm_nodes)
+    .force("link", d3.forceLink(comm_links)
+        .id(d => d.type_name)
+        // コミュニティ内は凝縮
+        // 外向きは少し距離に遊びを持たせて幾何学的な配置を避ける
+        .distance(d => d.source.community === d.target.community ? 15 : 120 + Math.random() * 40)
+        .strength(d => d.source.community === d.target.community ? 1.0 : 0.03)
+    )
+    .force("charge", d3.forceManyBody().strength(-1000))
+    .force("x", d3.forceX(comm_width / 2).strength(0.08))
+    .force("y", d3.forceY(comm_height / 2).strength(0.08))
+    .force("collision", d3.forceCollide().radius(d => getCommRadius(d) + 12))
+    .stop();
+
+for (let i = 0; i < 600; ++i) comm_simulation.tick();
+
+
+const comm_container = d3.create("div").style("position", "relative");
+
+const comm_svg = comm_container.append("svg")
+    .attr("viewBox", [0, 0, comm_width, comm_height])
+    .attr("style", "max-width: 100%; height: auto; background: var(--theme-background-alt); border-radius: 8px;");
+
+// コミュニティごとの領域を色で描画
+const groups = d3.groups(comm_nodes, d => d.community);
+const hullData = groups.map(([key, groupNodes]) => {
+  if (groupNodes.length < 3) {
+    // 3点未満の場合は領域が作れないので、点を少しずらしてダミー点を作るか、円で代用する
+    // ここでは単純化のため、3点以上のものだけ描画するか、中心からの距離で円を描く
+    const center = {
+      x: d3.mean(groupNodes, d => d.x),
+      y: d3.mean(groupNodes, d => d.y)
+    };
+    return { community: key, path: null, center: center, radius: 0 };
+  }
+  const points = groupNodes.map(d => [d.x, d.y]);
+  // 少し膨らませるために頂点を増やす（簡易的にはハルを描いた後にstrokeを太くする）
+  const hull = d3.polygonHull(points);
+  return {
+    community: key,
+    path: hull ? d3.line().curve(d3.curveBasisClosed)(hull) : null
+  };
+});
+
+const hullGroup = comm_svg.append("g")
+    .attr("class", "hulls")
+    .attr("filter", "url(#blur)");
+
+// コミュニティ領域の描画
+hullGroup.selectAll("path")
+  .data(hullData.filter(d => d.path))
+  .join("path")
+    .attr("d", d => d.path)
+    .attr("fill", "none")
+    .attr("stroke", d => communityColor(d.community))
+    .attr("stroke-width", 120)
+    .attr("stroke-linejoin", "round")
+    .attr("stroke-linecap", "round")
+    .attr("stroke-opacity", 0.2);
+
+hullGroup.selectAll("circle")
+  .data(hullData.filter(d => !d.path))
+  .join("circle")
+    .attr("cx", d => d.center.x)
+    .attr("cy", d => d.center.y)
+    .attr("r", d => d.radius)
+    .attr("fill", d => communityColor(d.community))
+    .attr("fill-opacity", 0.2)
+    .attr("stroke", "none");
+
+
+// リンク
+comm_svg.append("g")
+    .attr("stroke", "var(--theme-foreground-muted)")
+    .attr("stroke-opacity", 0.3)
+  .selectAll("line")
+  .data(comm_links)
+  .join("line")
+    .attr("stroke-width", d => Math.sqrt(d.value))
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+
+// ノード
+const comm_node = comm_svg.append("g")
+  .selectAll("g")
+  .data(comm_nodes)
+  .join("g")
+    .attr("transform", d => `translate(${d.x},${d.y})`);
+
+comm_node.append("circle")
+    .attr("r", d => getCommRadius(d))
+    .attr("fill", d => communityColor(d.community))
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1.5);
+
+
+comm_node.append("text")
+    .text(d => d.type_name)
+    .attr("text-anchor", "middle")
+    .attr("dy", ".35em")
+    .attr("font-size", "10px")
+    .attr("font-weight", "bold")
+    .attr("fill", "#fff")
+    .attr("stroke", d => communityColor(d.community))
+    .attr("stroke-width", 2)
+    .attr("paint-order", "stroke");
+
+display(comm_container.node());
+```
+
 ## ポケモンタイプ共起ネットワーク。ポケモンノードも描画した版
+
 
 ```js
 const bipartite_width = 800;
