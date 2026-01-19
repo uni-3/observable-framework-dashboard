@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "duckdb==1.1.3",
+#     "duckdb==1.4.3",
 #     "python-dotenv",
 #     "pandas",
 #     "scikit-learn",
