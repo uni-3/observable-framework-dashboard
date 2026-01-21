@@ -15,18 +15,61 @@ from networkx.algorithms.community import greedy_modularity_communities
 import sys
 import json
 import networkx as nx
+from typing import TypedDict
 
-def main():
+
+class TypeNodeStats(TypedDict):
+    """タイプノードの統計情報"""
+    type_name: str
+    total_count: int
+    single_type_count: int
+    single_type_rate: float
+    degree_centrality: float
+    eigenvector_centrality: float
+    group: int
+    community: int
+
+
+class CoLink(TypedDict):
+    """共起リンク"""
+    source: str
+    target: str
+    value: int
+
+
+class PokemonNode(TypedDict):
+    """ポケモンノード"""
+    name: str
+    types: list[str]
+    total_count: int
+    group: int
+
+
+class BipartiteLink(TypedDict):
+    """二部グラフリンク"""
+    source: str
+    target: str
+
+
+class NetworkOutput(TypedDict):
+    """ネットワークデータの出力型定義"""
+    type_nodes: list[TypeNodeStats]
+    pokemon_nodes: list[PokemonNode]
+    co_links: list[CoLink]
+    bipartite_links: list[BipartiteLink]
+
+
+def main() -> None:
     try:
         load_dotenv(".env.local")
         load_dotenv(".env")
 
 
-        database = os.getenv("DUCKDB_DATABASE")
+        database: str | None = os.getenv("DUCKDB_DATABASE")
         if not database:
             raise ValueError("DUCKDB_DATABASE environment variable is not set.")
 
-        con = duckdb.connect(database, read_only=True)
+        con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
 
         # 単タイプ率の計算と属性の取得
         type_stats_query = """
@@ -46,7 +89,7 @@ def main():
                 pokemon_type_counts st ON t.name = st.name
             GROUP BY 1
         """
-        type_data = {}
+        type_data: dict[str, dict[str, str | int | float]] = {}
         for row in con.sql(type_stats_query).fetchall():
             type_data[row[0]] = {
                 "type_name": row[0],
@@ -70,11 +113,11 @@ def main():
             GROUP BY 1, 2
         """
         # タイプノード
-        G = nx.Graph()
+        G: nx.Graph = nx.Graph()
         for type_name in type_data:
             G.add_node(type_name)
 
-        co_links = []
+        co_links: list[CoLink] = []
         for row in con.sql(co_occurrence_query).fetchall():
             co_links.append({
                 "source": row[0],
@@ -85,23 +128,23 @@ def main():
 
         # ネットワーク指標の計算 (Centrality)
         # 次数中心性: どれだけ多くのタイプと組み合わせがあるか
-        degree_cent = nx.degree_centrality(G)
+        degree_cent: dict[str, float] = nx.degree_centrality(G)
         # 固有ベクトル中心性: よく組み合わされるタイプとどれだけ繋がっているか
         try:
-            eigen_cent = nx.eigenvector_centrality(G, weight='weight', max_iter=1000)
+            eigen_cent: dict[str, float] = nx.eigenvector_centrality(G, weight='weight', max_iter=1000)
         except:
             eigen_cent = {n: 0 for n in G.nodes()}
 
         # Community detection using NetworkX's greedy modularity algorithm
-        communities = list(greedy_modularity_communities(G, weight='weight'))
+        communities: list[set[str]] = list(greedy_modularity_communities(G, weight='weight'))
         # Build a map from node to community index
-        community_map = {}
+        community_map: dict[str, int] = {}
         for idx, comm in enumerate(communities):
             for node in comm:
                 community_map[node] = idx
 
         # ノードリストの構築 マージ
-        nodes = []
+        nodes: list[TypeNodeStats] = []
         for type_name, stats in type_data.items():
             nodes.append({
                 **stats,
@@ -121,8 +164,8 @@ def main():
             GROUP BY
                 name
         """
-        pokemon_nodes = []
-        bipartite_links = []
+        pokemon_nodes: list[PokemonNode] = []
+        bipartite_links: list[BipartiteLink] = []
         for row in con.sql(pokemon_node_query).fetchall():
             name, types = row[0], row[1]
             pokemon_nodes.append({
@@ -134,7 +177,7 @@ def main():
             for t in types:
                 bipartite_links.append({"source": name, "target": t})
 
-        output = {
+        output: NetworkOutput = {
             "type_nodes": nodes,
             "pokemon_nodes": pokemon_nodes,
             "co_links": co_links,

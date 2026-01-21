@@ -12,8 +12,25 @@ import os
 from dotenv import load_dotenv
 import sys
 import json
+from typing import TypedDict
 
-def main():
+
+class HabitatShapeOutput(TypedDict):
+    """生息地・形状データの出力型定義"""
+    habitat_name: str
+    habitat_name_ja: str
+    shape_name: str
+    shape_name_ja: str
+    egg_groups: list[str]
+    egg_groups_ja: list[str]
+    types: list[str]
+    types_ja: list[str]
+    name: str
+    ja_name: str
+    generation_name_ja: str
+
+
+def main() -> None:
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(script_dir, "../../../"))
@@ -21,7 +38,7 @@ def main():
         load_dotenv(os.path.join(project_root, ".env.local"))
         load_dotenv(os.path.join(project_root, ".env"))
 
-        database = os.getenv("DUCKDB_DATABASE")
+        database: str | None = os.getenv("DUCKDB_DATABASE")
         if not database:
              # Fallback
              possible_db = os.path.join(project_root, "dlt_data.duckdb")
@@ -30,7 +47,7 @@ def main():
              else:
                  raise ValueError("DUCKDB_DATABASE environment variable is not set and fallback not found.")
 
-        con = duckdb.connect(database, read_only=True)
+        con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
 
         query = """
             SELECT
@@ -61,7 +78,7 @@ def main():
                 generation_name_ja
         """
 
-        results = []
+        results: list[HabitatShapeOutput] = []
         for row in con.sql(query).fetchall():
             results.append({
                 "habitat_name": row[0],

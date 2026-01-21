@@ -18,8 +18,19 @@ import json
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 import prince
+from typing import TypedDict, Literal
 
-def main():
+
+class CorrespondencePoint(TypedDict):
+    """対応分析の各点の型定義"""
+    name: str
+    type: Literal["pokemon", "habitat", "shape", "egg", "poke_type", "other"]
+    x: float
+    y: float
+    label: str
+
+
+def main() -> None:
     try:
         # Determine the project root directory (3 levels up from this script)
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +39,7 @@ def main():
         load_dotenv(os.path.join(project_root, ".env.local"))
         load_dotenv(os.path.join(project_root, ".env"))
 
-        database = os.getenv("DUCKDB_DATABASE")
+        database: str | None = os.getenv("DUCKDB_DATABASE")
         if not database:
              pass
 
@@ -46,7 +57,7 @@ def main():
              else:
                  raise ValueError(f"DUCKDB_DATABASE environment variable is not set and {possible_db} not found.")
 
-        con = duckdb.connect(database, read_only=True)
+        con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
 
         query = """
             SELECT
@@ -68,20 +79,20 @@ def main():
         """
 
         # Fetch data
-        df = con.sql(query).df()
+        df: pd.DataFrame = con.sql(query).df()
 
         # Preprocessing
         # 1. Indicator for Habitat (Categorical)
-        habitat_dummies = pd.get_dummies(df['habitat_name_ja'], prefix='habitat')
+        habitat_dummies: pd.DataFrame = pd.get_dummies(df['habitat_name_ja'], prefix='habitat')
 
         # 2. Indicator for Shape (Categorical)
-        shape_dummies = pd.get_dummies(df['shape_name_ja'], prefix='shape')
+        shape_dummies: pd.DataFrame = pd.get_dummies(df['shape_name_ja'], prefix='shape')
 
         # 3. Indicator for Egg Groups (Multi-label)
         # egg_groups_ja is likely a list of strings due to DuckDB array -> Python list conversion
-        mlb_egg = MultiLabelBinarizer()
+        mlb_egg: MultiLabelBinarizer = MultiLabelBinarizer()
         egg_dummies_matrix = mlb_egg.fit_transform(df['egg_groups_ja'])
-        egg_dummies = pd.DataFrame(
+        egg_dummies: pd.DataFrame = pd.DataFrame(
             egg_dummies_matrix,
             columns=[f"egg_{c}" for c in mlb_egg.classes_],
             index=df.index
@@ -89,9 +100,9 @@ def main():
 
         # 4. Indicator for Types (Multi-label)
         # Assuming types_ja is also an array. If it comes as list, usage is same as egg groups.
-        mlb_type = MultiLabelBinarizer()
+        mlb_type: MultiLabelBinarizer = MultiLabelBinarizer()
         type_dummies_matrix = mlb_type.fit_transform(df['types_ja'])
-        type_dummies = pd.DataFrame(
+        type_dummies: pd.DataFrame = pd.DataFrame(
             type_dummies_matrix,
             columns=[f"type_{c}" for c in mlb_type.classes_],
             index=df.index
@@ -109,10 +120,10 @@ def main():
         # Actually, MCA *is* CA on the indicator matrix.
         # So let's construct the full indicator matrix and run CA on it.
 
-        indicator_matrix = pd.concat([habitat_dummies, shape_dummies, egg_dummies, type_dummies], axis=1).astype(float)
+        indicator_matrix: pd.DataFrame = pd.concat([habitat_dummies, shape_dummies, egg_dummies, type_dummies], axis=1).astype(float)
 
         # Prince CA
-        ca = prince.CA(
+        ca: prince.CA = prince.CA(
             n_components=2,
             n_iter=10,
             copy=True,
@@ -124,24 +135,24 @@ def main():
         ca = ca.fit(indicator_matrix)
 
         # Row coordinates (Pokemon)
-        row_coords = ca.row_coordinates(indicator_matrix)
+        row_coords: pd.DataFrame = ca.row_coordinates(indicator_matrix)
         row_coords['name'] = df['ja_name']
         row_coords['type'] = 'pokemon'
 
         # Column coordinates (Categories)
-        col_coords = ca.column_coordinates(indicator_matrix)
+        col_coords: pd.DataFrame = ca.column_coordinates(indicator_matrix)
         col_coords['name'] = col_coords.index
         # Determine original type (habitat, shape, egg) based on prefix or known sets
         # We used prefixes 'habitat_', 'shape_', 'egg_'
 
-        def get_category_type(col_name):
+        def get_category_type(col_name: str) -> tuple[str, str]:
             if col_name.startswith('habitat_'): return 'habitat', col_name.replace('habitat_', '')
             if col_name.startswith('shape_'): return 'shape', col_name.replace('shape_', '')
             if col_name.startswith('egg_'): return 'egg', col_name.replace('egg_', '')
             if col_name.startswith('type_'): return 'poke_type', col_name.replace('type_', '') # use poke_type to avoid confusion with entity 'type' column
             return 'other', col_name
 
-        col_types = [get_category_type(c) for c in col_coords.index]
+        col_types: list[tuple[str, str]] = [get_category_type(c) for c in col_coords.index]
         col_coords['type'] = [t[0] for t in col_types]
         col_coords['label'] = [t[1] for t in col_types]
 
@@ -150,7 +161,7 @@ def main():
         col_coords = col_coords.rename(columns={0: 'x', 1: 'y'})
 
         # Combine
-        output_data = []
+        output_data: list[CorrespondencePoint] = []
 
         # Add Pokemon points
         for _, row in row_coords.iterrows():

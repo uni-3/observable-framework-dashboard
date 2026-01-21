@@ -11,18 +11,19 @@ import os
 from dotenv import load_dotenv
 import duckdb
 
-def main():
+
+def main() -> None:
     load_dotenv(".env.local")
     load_dotenv(".env")
 
-    database = os.getenv("DUCKDB_DATABASE")
+    database: str | None = os.getenv("DUCKDB_DATABASE")
     if not database:
         raise ValueError("DUCKDB_DATABASE environment variable is not set.")
 
-    con = duckdb.connect(database, read_only=True)
+    con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
 
     # クエリ実行
-    res = con.sql("SELECT * FROM pokemon_marts.count_pokemon_type_generate")
+    res: duckdb.DuckDBPyRelation = con.sql("SELECT * FROM pokemon_marts.count_pokemon_type_generate")
 
     # CSV形式で変数に取得
     res.write_csv("/dev/stdout", header=True)
