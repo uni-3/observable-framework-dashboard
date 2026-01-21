@@ -11,18 +11,19 @@ import os
 from dotenv import load_dotenv
 import duckdb
 
-def main():
+
+def main() -> None:
     load_dotenv(".env.local")
     load_dotenv(".env")
 
-    database = os.getenv("DUCKDB_DATABASE")
+    database: str | None = os.getenv("DUCKDB_DATABASE")
     if not database:
         raise ValueError("DUCKDB_DATABASE environment variable is not set.")
 
-    con = duckdb.connect(database, read_only=True)
+    con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
 
     # クエリ実行
-    res = con.sql("""
+    res: duckdb.DuckDBPyRelation = con.sql("""
         SELECT
             name,
             height,
