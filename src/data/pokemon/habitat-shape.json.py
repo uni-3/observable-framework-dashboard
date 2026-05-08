@@ -2,17 +2,17 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "duckdb==1.4.3",
+#     "duckdb==1.5.2",
 #     "python-dotenv",
 # ]
 # ///
 
 import duckdb
-import os
-from dotenv import load_dotenv
 import sys
 import json
 from typing import TypedDict
+
+from _ducklake import connect_pokemon_ducklake
 
 
 class HabitatShapeOutput(TypedDict):
@@ -32,22 +32,7 @@ class HabitatShapeOutput(TypedDict):
 
 def main() -> None:
     try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(script_dir, "../../../"))
-
-        load_dotenv(os.path.join(project_root, ".env.local"))
-        load_dotenv(os.path.join(project_root, ".env"))
-
-        database: str | None = os.getenv("DUCKDB_DATABASE")
-        if not database:
-             # Fallback
-             possible_db = os.path.join(project_root, "dlt_data.duckdb")
-             if os.path.exists(possible_db):
-                 database = possible_db
-             else:
-                 raise ValueError("DUCKDB_DATABASE environment variable is not set and fallback not found.")
-
-        con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
+        con: duckdb.DuckDBPyConnection = connect_pokemon_ducklake()
 
         query = """
             SELECT
