@@ -2,25 +2,18 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "duckdb==1.2.1",
+#     "duckdb==1.5.2",
 #     "python-dotenv",
 # ]
 # ///
 
-import os
-from dotenv import load_dotenv
 import duckdb
+
+from _ducklake import connect_pokemon_ducklake
 
 
 def main() -> None:
-    load_dotenv(".env.local")
-    load_dotenv(".env")
-
-    database: str | None = os.getenv("DUCKDB_DATABASE")
-    if not database:
-        raise ValueError("DUCKDB_DATABASE environment variable is not set.")
-
-    con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
+    con: duckdb.DuckDBPyConnection = connect_pokemon_ducklake()
 
     # クエリ実行
     res: duckdb.DuckDBPyRelation = con.sql("""

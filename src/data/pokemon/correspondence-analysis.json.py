@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "duckdb==1.4.3",
+#     "duckdb==1.5.2",
 #     "python-dotenv",
 #     "pandas",
 #     "scikit-learn",
@@ -11,14 +11,14 @@
 # ///
 
 import duckdb
-import os
-from dotenv import load_dotenv
 import sys
 import json
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 import prince
 from typing import TypedDict, Literal
+
+from _ducklake import connect_pokemon_ducklake
 
 
 class CorrespondencePoint(TypedDict):
@@ -32,32 +32,7 @@ class CorrespondencePoint(TypedDict):
 
 def main() -> None:
     try:
-        # Determine the project root directory (3 levels up from this script)
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(script_dir, "../../../"))
-
-        load_dotenv(os.path.join(project_root, ".env.local"))
-        load_dotenv(os.path.join(project_root, ".env"))
-
-        database: str | None = os.getenv("DUCKDB_DATABASE")
-        if not database:
-             pass
-
-        # If database is just a filename, assume it's in project root if not found
-        if database and not os.path.isabs(database):
-             possible_path = os.path.join(project_root, database)
-             if os.path.exists(possible_path):
-                 database = possible_path
-
-        if not database:
-             # Fallback
-             possible_db = os.path.join(project_root, "dlt_data.duckdb")
-             if os.path.exists(possible_db):
-                 database = possible_db
-             else:
-                 raise ValueError(f"DUCKDB_DATABASE environment variable is not set and {possible_db} not found.")
-
-        con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
+        con: duckdb.DuckDBPyConnection = connect_pokemon_ducklake()
 
         query = """
             SELECT

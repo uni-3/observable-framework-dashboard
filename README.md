@@ -18,25 +18,31 @@ For more, see <https://observablehq.com/framework/getting-started>.
 
 ## Setup
 
-This project uses environment variables to manage database connections.
+This project uses environment variables to manage the DuckLake connection for data loaders.
 
 ### Local Environment
 
 1. Create a `.env` or `.env.local` file in the root directory (refer to `.env.sample`).
    - `.env.local` is recommended for local overrides as it is typically gitignored.
 2. Set the following variables:
-   - `DUCKDB_DATABASE`: Path to your local DuckDB file or MotherDuck connection string (e.g., `md:` or `md:my_db`).
-   - `MOTHERDUCK_TOKEN`: Your MotherDuck token (required if using MotherDuck).
+   - `DUCKLAKE_POSTGRES_DSN`: PostgreSQL DSN for the DuckLake catalog.
+   - `DUCKLAKE_DATA_PATH`: R2 data path for DuckLake files.
+   - `R2_ACCOUNT_ID`: Cloudflare R2 account ID.
+   - `R2_ACCESS_KEY_ID`: Cloudflare R2 access key ID.
+   - `R2_SECRET_ACCESS_KEY`: Cloudflare R2 secret access key.
 
 ### GitHub Pages Deployment
 
-To enable data loading from MotherDuck during the GitHub Actions build, you must configure **GitHub Repository Secrets**:
+To enable data loading from DuckLake during the GitHub Actions build, you must configure **GitHub Repository Secrets**:
 
 1. Go to your repository on GitHub.
 2. Navigate to **Settings > Secrets and variables > Actions**.
 3. Add the following secrets:
-   - `DUCKDB_DATABASE`: Set to `md:` or your specific MotherDuck database name.
-   - `MOTHERDUCK_TOKEN`: Your MotherDuck service token.
+   - `DUCKLAKE_POSTGRES_DSN`
+   - `DUCKLAKE_DATA_PATH`
+   - `R2_ACCOUNT_ID`
+   - `R2_ACCESS_KEY_ID`
+   - `R2_SECRET_ACCESS_KEY`
 
 ## Project structure
 

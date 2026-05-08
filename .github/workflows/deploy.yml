@@ -29,8 +29,11 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          DUCKDB_DATABASE: ${{ secrets.DUCKDB_DATABASE }}
-          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          DUCKLAKE_POSTGRES_DSN: ${{ secrets.DUCKLAKE_POSTGRES_DSN }}
+          DUCKLAKE_DATA_PATH: ${{ secrets.DUCKLAKE_DATA_PATH }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       - uses: actions/configure-pages@v4
       - name: upload pages artifact
         uses: actions/upload-pages-artifact@v3

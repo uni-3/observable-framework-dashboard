@@ -2,20 +2,20 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "duckdb==1.4.3",
+#     "duckdb==1.5.2",
 #     "python-dotenv",
 #     "networkx",
 # ]
 # ///
 
 import duckdb
-import os
-from dotenv import load_dotenv
 from networkx.algorithms.community import greedy_modularity_communities
 import sys
 import json
 import networkx as nx
 from typing import TypedDict
+
+from _ducklake import connect_pokemon_ducklake
 
 
 class TypeNodeStats(TypedDict):
@@ -61,15 +61,7 @@ class NetworkOutput(TypedDict):
 
 def main() -> None:
     try:
-        load_dotenv(".env.local")
-        load_dotenv(".env")
-
-
-        database: str | None = os.getenv("DUCKDB_DATABASE")
-        if not database:
-            raise ValueError("DUCKDB_DATABASE environment variable is not set.")
-
-        con: duckdb.DuckDBPyConnection = duckdb.connect(database, read_only=True)
+        con: duckdb.DuckDBPyConnection = connect_pokemon_ducklake()
 
         # 単タイプ率の計算と属性の取得
         type_stats_query = """
